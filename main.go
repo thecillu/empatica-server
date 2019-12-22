@@ -30,7 +30,7 @@ func handleRequests() {
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome to the HomePage!")
+	fmt.Fprintf(w, "Welcome to the HomePage v.0.0.2!")
 	fmt.Println("Endpoint Hit: homePage")
 }
 
