@@ -10,7 +10,13 @@ import (
 var DB_CONNECTION_STRING string
 
 func init() {
-	DB_CONNECTION_STRING = os.Getenv("DB_CONNECTION_STRING")
+	var DB_ENDPOINT string
+	DB_ENDPOINT = os.Getenv("DB_ENDPOINT")
+	var DB_USERNAME string
+	DB_USERNAME = os.Getenv("DB_USERNAME")
+	var DB_PASSWORD string
+	DB_PASSWORD = os.Getenv("DB_PASSWORD")
+	DB_CONNECTION_STRING = DB_USERNAME + ":" + DB_PASSWORD + "@tcp(" + DB_ENDPOINT + ")/empatica"
 }
 
 type Article struct {
@@ -53,7 +59,7 @@ func SaveArticle(article Article) error {
 	defer db.Close()
 	fmt.Println(article.ID)
 	sqlStatement := `
-	INSERT INTO test.articles (id, title, description, content) 
+	INSERT INTO articles (id, title, description, content) 
 	VALUES (?, ?, ?, ?)`
 	_, err = db.Exec(sqlStatement, article.ID, article.Title, article.Description, article.Content)
 
@@ -82,7 +88,7 @@ func UpdateArticle(article Article) (int, error) {
 		}
 	} else {
 		sqlStatement := `
-		UPDATE test.articles set title = ?,  description = ?,  content = ?
+		UPDATE articles set title = ?,  description = ?,  content = ?
 		WHERE ID = ?`
 		_, err = db.Exec(sqlStatement, article.Title, article.Description, article.Content, article.ID)
 		if err != nil {
@@ -98,7 +104,7 @@ func GetArticle(id string) (Article, error) {
 	var article Article
 	db, err := sql.Open("mysql", DB_CONNECTION_STRING)
 	defer db.Close()
-	err = db.QueryRow("SELECT ID, title, description, content FROM test.articles where id = ?", id).Scan(&article.ID, &article.Title, &article.Description, &article.Content)
+	err = db.QueryRow("SELECT ID, title, description, content FROM articles where id = ?", id).Scan(&article.ID, &article.Title, &article.Description, &article.Content)
 	if err != nil {
 		fmt.Println(err)
 		return article, err
@@ -114,7 +120,7 @@ func DeleteArticle(id string) error {
 	}
 	defer db.Close()
 	sqlStatement := `
-	DELETE FROM test.articles
+	DELETE FROM articles
 	WHERE ID = ?`
 	_, err = db.Exec(sqlStatement, id)
 

@@ -99,8 +99,16 @@ func updateArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	var DB_ENDPOINT string
+	DB_ENDPOINT = os.Getenv("DB_ENDPOINT")
+	var DB_USERNAME string
+	DB_USERNAME = os.Getenv("DB_USERNAME")
+	var DB_PASSWORD string
+	DB_PASSWORD = os.Getenv("DB_PASSWORD")
+	var DB_NAME string
+	DB_NAME = os.Getenv("DB_NAME")
 	var DB_CONNECTION_STRING string
-	DB_CONNECTION_STRING = os.Getenv("DB_CONNECTION_STRING")
+	DB_CONNECTION_STRING = DB_USERNAME + ":" + DB_PASSWORD + "@tcp(" + DB_ENDPOINT + ")/" + DB_NAME
 	m, err := migrate.New(
 		"file://db/migrations",
 		"mysql://"+DB_CONNECTION_STRING)
