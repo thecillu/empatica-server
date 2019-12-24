@@ -33,7 +33,7 @@ func GetAllArticles() ([]Article, error) {
 		return nil, err
 	}
 
-	results, err := db.Query("SELECT ID, title, description, content FROM test.articles")
+	results, err := db.Query("SELECT ID, title, description, content FROM articles")
 	if err != nil {
 		fmt.Println(err)
 		return articles, err
