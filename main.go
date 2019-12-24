@@ -1,30 +1,31 @@
 package main
 
 import (
+	"empatica-server/model"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
+	_ "database/sql"
+
+	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/golang-migrate/migrate"
+	_ "github.com/golang-migrate/migrate/database/mysql"
+	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/gorilla/mux"
 )
-
-type Article struct {
-	Id      string `json:"Id"`
-	Title   string `json:"Title"`
-	Desc    string `json:"desc"`
-	Content string `json:"content"`
-}
-
-var Articles []Article
 
 func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", homePage).Methods("GET")
-	myRouter.HandleFunc("/articles", returnAllArticles).Methods("GET")
-	myRouter.HandleFunc("/articles/{id}", returnSingleArticle).Methods("GET")
-	myRouter.HandleFunc("/articles", createNewArticle).Methods("POST")
+	myRouter.HandleFunc("/articles", getAllArticles).Methods("GET")
+	myRouter.HandleFunc("/articles/{id}", getArticle).Methods("GET")
+	myRouter.HandleFunc("/articles", saveArticle).Methods("POST")
+	myRouter.HandleFunc("/articles", updateArticle).Methods("PUT")
 	myRouter.HandleFunc("/articles/{id}", deleteArticle).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":80", myRouter))
 }
@@ -34,59 +35,81 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: homePage")
 }
 
-func returnAllArticles(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(Articles)
+func getAllArticles(w http.ResponseWriter, r *http.Request) {
+	var articles []model.Article
+	var err error
+	articles, err = model.GetAllArticles()
+	if err != nil {
+		http.Error(w, "Ops...sorry but we have some problems", http.StatusInternalServerError)
+	} else {
+		json.NewEncoder(w).Encode(articles)
+	}
 }
 
-func createNewArticle(w http.ResponseWriter, r *http.Request) {
-	reqBody, _ := ioutil.ReadAll(r.Body)
-	var article Article
-	json.Unmarshal(reqBody, &article)
-	// update our global Articles array to include
-	// our new Article
-	Articles = append(Articles, article)
-
-	json.NewEncoder(w).Encode(article)
-}
-
-func returnSingleArticle(w http.ResponseWriter, r *http.Request) {
+func getArticle(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	key := vars["id"]
-	// Loop over all of our Articles
-	// if the article.Id equals the key we pass in
-	// return the article encoded as JSON
-	for _, article := range Articles {
-		if article.Id == key {
-			json.NewEncoder(w).Encode(article)
-		}
+	id := vars["id"]
+	var article model.Article
+	var err error
+	article, err = model.GetArticle(id)
+	if err != nil {
+		http.Error(w, "Article not found", http.StatusNotFound)
+	} else {
+		json.NewEncoder(w).Encode(article)
+	}
+}
+
+func saveArticle(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var article model.Article
+	json.Unmarshal(reqBody, &article)
+	var err error
+	err = model.SaveArticle(article)
+	if err != nil {
+		http.Error(w, "Ops...sorry but we have some problems", http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusCreated)
 	}
 }
 
 func deleteArticle(w http.ResponseWriter, r *http.Request) {
-	// once again, we will need to parse the path parameters
 	vars := mux.Vars(r)
-	// we will need to extract the `id` of the article we
-	// wish to delete
 	id := vars["id"]
-
-	// we then need to loop through all our articles
-	for index, article := range Articles {
-		// if our id path parameter matches one of our
-		// articles
-		if article.Id == id {
-			// updates our Articles array to remove the
-			// article
-			Articles = append(Articles[:index], Articles[index+1:]...)
-		}
+	var err error
+	err = model.DeleteArticle(id)
+	if err != nil {
+		http.Error(w, "Ops...sorry but we have some problems", http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusNoContent)
 	}
+}
 
+func updateArticle(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var article model.Article
+	json.Unmarshal(reqBody, &article)
+	var err error
+	var result int
+	result, err = model.UpdateArticle(article)
+	if err != nil {
+		http.Error(w, "Ops...sorry but we have some problems", http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(result)
+	}
 }
 
 func main() {
-	fmt.Println("Empatica Rest API v1.0")
-	Articles = []Article{
-		Article{Id: "1", Title: "Hello", Desc: "Article Description", Content: "Article Content"},
-		Article{Id: "2", Title: "Hello 2", Desc: "Article Description", Content: "Article Content"},
+	var DB_CONNECTION_STRING string
+	DB_CONNECTION_STRING = os.Getenv("DB_CONNECTION_STRING")
+	m, err := migrate.New(
+		"file://db/migrations",
+		"mysql://"+DB_CONNECTION_STRING)
+	m.Steps(1)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
+	fmt.Println("Empatica Rest API")
 	handleRequests()
 }
