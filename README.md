@@ -1,6 +1,6 @@
-# EmpaticaServer
+# Empatica RESTful Server
 
-Restful Golang Server which manage Articles.
+RESTful Golang Server which manage Articles.
 
 The Articles are saved in a Mysql Relational Database.
 
