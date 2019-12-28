@@ -38,7 +38,7 @@ func manageOptions(w http.ResponseWriter, r *http.Request) {
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome to the HomePage v.0.0.4!")
+	fmt.Fprintf(w, "Welcome to the HomePage v.0.0.9!")
 	fmt.Println("Endpoint Hit: homePage")
 }
 
