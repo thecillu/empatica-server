@@ -2,7 +2,7 @@
 
 Restful Golang Server which manage Articles.
 
-The Article are saved in a Mysql Relational Database.
+The Articles are saved in a Mysql Relational Database.
 
 `GET http://<endpoint>/articles` - List all the Articles.
 
