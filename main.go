@@ -113,7 +113,7 @@ func updateArticle(w http.ResponseWriter, r *http.Request) {
 func setupResponse(w *http.ResponseWriter, req *http.Request) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization,  X-Auth-Token, X-Requested-With, Access-Control-Allow-Headers")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Origin,  Pragma, Cache-Control, Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization,  X-Auth-Token, X-Requested-With, Access-Control-Allow-Headers")
 }
 
 func main() {
