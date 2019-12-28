@@ -25,17 +25,25 @@ func handleRequests() {
 	myRouter.HandleFunc("/articles", getAllArticles).Methods("GET")
 	myRouter.HandleFunc("/articles/{id}", getArticle).Methods("GET")
 	myRouter.HandleFunc("/articles", saveArticle).Methods("POST")
-	myRouter.HandleFunc("/articles", updateArticle).Methods("PUT")
+	myRouter.HandleFunc("/articles/{id}", updateArticle).Methods("PUT")
 	myRouter.HandleFunc("/articles/{id}", deleteArticle).Methods("DELETE")
+	myRouter.HandleFunc("/articles", manageOptions).Methods("OPTIONS")
+	myRouter.HandleFunc("/articles/{id}", manageOptions).Methods("OPTIONS")
 	log.Fatal(http.ListenAndServe(":80", myRouter))
 }
 
+func manageOptions(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
+	w.WriteHeader(http.StatusOK)
+}
+
 func homePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome to the HomePage v.0.0.2!")
+	fmt.Fprintf(w, "Welcome to the HomePage v.0.0.4!")
 	fmt.Println("Endpoint Hit: homePage")
 }
 
 func getAllArticles(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
 	var articles []model.Article
 	var err error
 	articles, err = model.GetAllArticles()
@@ -47,6 +55,7 @@ func getAllArticles(w http.ResponseWriter, r *http.Request) {
 }
 
 func getArticle(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
 	vars := mux.Vars(r)
 	id := vars["id"]
 	var article model.Article
@@ -60,6 +69,7 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func saveArticle(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var article model.Article
 	json.Unmarshal(reqBody, &article)
@@ -73,6 +83,7 @@ func saveArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteArticle(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
 	vars := mux.Vars(r)
 	id := vars["id"]
 	var err error
@@ -85,6 +96,7 @@ func deleteArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateArticle(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var article model.Article
 	json.Unmarshal(reqBody, &article)
@@ -98,6 +110,12 @@ func updateArticle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func setupResponse(w *http.ResponseWriter, req *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization,  X-Auth-Token")
+}
+
 func main() {
 	var DB_ENDPOINT string
 	DB_ENDPOINT = os.Getenv("DB_ENDPOINT")
@@ -109,6 +127,7 @@ func main() {
 	DB_NAME = os.Getenv("DB_NAME")
 	var DB_CONNECTION_STRING string
 	DB_CONNECTION_STRING = DB_USERNAME + ":" + DB_PASSWORD + "@tcp(" + DB_ENDPOINT + ")/" + DB_NAME
+	fmt.Println(DB_CONNECTION_STRING)
 	m, err := migrate.New(
 		"file://db/migrations",
 		"mysql://"+DB_CONNECTION_STRING)
